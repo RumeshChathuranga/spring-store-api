@@ -1,5 +1,6 @@
 package com.rumeshchathuranga.springapi.controllers;
 
+import com.rumeshchathuranga.springapi.dtos.UserDto;
 import com.rumeshchathuranga.springapi.entities.User;
 import com.rumeshchathuranga.springapi.repositories.UserRepository;
 import lombok.AllArgsConstructor;
@@ -18,17 +19,21 @@ public class UserController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public Iterable<User> getUsers() {
-        return userRepository.findAll();
+    public Iterable<UserDto> getUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserDto(user.getId(), user.getName(), user.getEmail()))
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id){
+    public ResponseEntity<UserDto> getUser(@PathVariable Long id){
         var user = userRepository.findById(id).orElse(null);
         if(user == null){
 //            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(user);
+        var userDto = new UserDto(user.getId(), user.getName(), user.getEmail());
+        return ResponseEntity.ok(userDto);
     }
 }
