@@ -22,11 +22,9 @@ public class UserController {
 
     @GetMapping
     public Iterable<UserDto> getUsers(
-            @RequestHeader(name = "x-auth-token", required = false) String authToken,
            @RequestParam(required = false, defaultValue = "", name = "sort") String sort
            //In future if we change the parameter name to SortBy like the code doesn't break
     ) {
-        System.out.println(authToken);
         if(!Set.of("name", "email").contains(sort))
             sort="name";
         return userRepository.findAll(Sort.by(sort).ascending())
@@ -43,5 +41,10 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(userMapper.toDto(user));
+    }
+
+    @PostMapping
+    public UserDto createUser(@RequestBody UserDto data){
+        return data;
     }
 }
