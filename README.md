@@ -94,5 +94,116 @@ public class MessageController {
 }
 
 ```
+# Building RESTful APIs
+
+This guide details the design and implementation of RESTful APIs in Spring Boot, covering HTTP request handling, API response structuring, and the execution of CRUD operations.
 
 ---
+
+### Creating APIs
+
+Spring Boot uses specific annotations to define the structure of a REST controller:
+
+* **`@RestController`**: Identifies a class as a controller for a REST API.
+
+
+* **`@RequestMapping`**: Sets the base URL path for all endpoints defined within that controller.
+
+
+
+```java
+@RestController
+@RequestMapping("/products")
+public class ProductController { }
+
+```
+
+---
+
+### Handling HTTP Requests
+
+Different annotations allow you to extract data from various parts of an incoming HTTP request:
+
+* **`@PathVariable`**: Used to extract values directly from the URL path, such as a specific resource ID.
+
+
+```java
+@GetMapping("/{id}")
+public Product getProduct(@PathVariable Long id) {}
+
+```
+
+
+* **`@RequestParam`**: Extracts query parameters from the URL, which is a standard practice for filtering and sorting data.
+
+
+* **`@RequestHeader`**: Reads specific HTTP headers, typically used for metadata or authentication tokens.
+
+
+* **`@RequestBody`**: Extracts data from the body of the request, which is common when creating or updating resources.
+
+
+
+---
+
+### Handling HTTP Responses
+
+To provide structured and meaningful feedback to the client, Spring Boot uses specific tools for response management:
+
+* **`ResponseEntity`**: A utility class used to customize the entire API response, including the status code, headers, and body.
+
+
+* **Common HTTP Status Codes**:
+* **200 OK**: The request was successful.
+
+
+* **201 Created**: A new resource was successfully created.
+
+
+* **400 Bad Request**: The request was invalid.
+
+
+* **404 Not Found**: The requested resource does not exist.
+
+
+
+
+
+---
+
+### Using DTOs and Mapping
+
+To maintain a clean architecture and security, internal database entities should not be exposed directly to the client.
+
+* **Data Transfer Objects (DTOs)**: Custom objects used to define exactly what data should be sent in an API response.
+
+
+* **MapStruct**: A library that automates the conversion between database entities and DTOs, removing the need for manual mapping code.
+
+
+
+```java
+@Mapper(componentModel = "spring")
+public interface ProductMapper {
+    @Mapping(source = "category.id", target = "categoryId")
+    ProductDto toDto(Product product);
+}
+
+```
+
+---
+
+### CRUD Operations
+
+The following table summarizes how standard database actions map to HTTP methods in a RESTful service:
+
+| Operation | HTTP Method | Description |
+| --- | --- | --- |
+| **Create** | `POST` | Adds new data to the database.|
+| **Read** | `GET` | Retrieves data, often with filtering or sorting.|
+| **Update** | `PUT`/`PATCH` | Modifies existing records.|
+| **Delete** | `DELETE` | Removes data while handling errors.|
+| **Action Update** | `POST` | Used for state changes that don't fit standard CRUD (e.g., password changes).|
+
+---
+
