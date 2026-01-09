@@ -1,6 +1,7 @@
 package com.rumeshchathuranga.springapi.controllers;
 
 import com.rumeshchathuranga.springapi.dtos.RegisterUserRequest;
+import com.rumeshchathuranga.springapi.dtos.UpdateUserRequest;
 import com.rumeshchathuranga.springapi.dtos.UserDto;
 import com.rumeshchathuranga.springapi.entities.User;
 import com.rumeshchathuranga.springapi.mappers.UserMapper;
@@ -54,5 +55,21 @@ public class UserController {
         var userDto = userMapper.toDto(user);
         var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
         return ResponseEntity.created(uri).body(userDto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> updateUser(
+            @PathVariable(name = "id") Long id,
+            @RequestBody UpdateUserRequest request
+            ){
+        var user = userRepository.findById(id).orElse(null);
+        if(user == null){
+            return ResponseEntity.notFound().build();
+        }
+
+        userMapper.updateUser(request,user);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(userMapper.toDto(user));
     }
 }
