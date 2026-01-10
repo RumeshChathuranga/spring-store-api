@@ -207,3 +207,112 @@ The following table summarizes how standard database actions map to HTTP methods
 
 ---
 
+# Validating API Requests
+
+---
+
+### Jakarta Validation Annotations
+
+Spring Boot leverages Jakarta Validation to enforce rules directly on data fields using annotations.
+
+#### String Validation
+
+* **`@NotBlank`**: Ensures a string is not empty and contains at least one non-whitespace character.
+
+
+* **`@NotEmpty`**: Ensures a string is not empty (`""`) but allows whitespace.
+
+
+* **`@Size`**: Enforces specific character length constraints.
+
+
+* **`@Pattern`**: Ensures the value matches a defined regex pattern (e.g., for phone numbers).
+
+
+* **`@Email`**: Validates that the string follows a proper email format.
+
+
+
+#### Number Validation
+
+* **`@Positive` / `@PositiveOrZero`**: Ensures the value is greater than 0, or 0 and greater, respectively.
+
+
+* **`@Negative` / `@NegativeOrZero`**: Ensures the value is less than 0, or 0 and less, respectively.
+
+
+* **`@Min(value)` / `@Max(value)`**: Enforces a minimum or maximum numerical value.
+
+
+
+#### Date and Time Validation
+
+* **`@Past` / `@PastOrPresent`**: Ensures the date is in the past, or allows for today's date.
+
+
+* **`@Future` / `@FutureOrPresent`**: Ensures the date is in the future, or allows for today's date.
+
+
+
+#### General Validation
+
+* **`@NotNull`**: Ensures the field value is not null.
+
+
+
+---
+
+### Handling Validation Errors
+
+When a request fails validation, Spring throws a `MethodArgumentNotValidException`.
+
+#### Local and Global Handling
+
+* **Local Handling**: You can use `@ExceptionHandler` within a specific controller to catch errors and return structured messages.
+
+
+* **Global Handling**: Using `@ControllerAdvice`, you can move error handling to a centralized class to maintain consistency across the entire application.
+
+
+
+```java
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException exception) {
+    var errors = new HashMap<String, String>();
+    exception.getBindingResult().getFieldErrors().forEach(error -> 
+        errors.put(error.getField(), error.getDefaultMessage()));
+    return ResponseEntity.badRequest().body(errors);
+}
+
+```
+
+
+
+---
+
+### Custom Validation and Business Rules
+
+Sometimes built-in annotations are insufficient for specific needs.
+
+* **Custom Annotations**: You can create custom validation annotations by defining an `@interface` and a corresponding validator class.
+
+
+* **Business Rules**: Validation that requires external checks (like querying a database to see if an email is already taken) is typically handled in the controller rather than through annotations.
+
+
+* **Validation Order**: Input format is validated first via annotations; if those pass, business rules are then checked in the logic.
+
+
+
+```java
+if (userRepository.existsByEmail(request.getEmail())) {
+    return ResponseEntity.badRequest().body(
+        Map.of("email", "Email is already registered.")
+    );
+}
+
+```
+
+
+
+---
