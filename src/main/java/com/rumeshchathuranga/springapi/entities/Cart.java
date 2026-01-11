@@ -23,7 +23,7 @@ public class Cart {
     @Column(name = "date_created", insertable = false, updatable = false) //Hibernate ignores
     private LocalDate dateCreated;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.MERGE, fetch = FetchType.EAGER) // Update
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = true) // Update
     private Set<CartItem> items = new LinkedHashSet<>();
 
     public BigDecimal getTotalPrice() {
@@ -52,5 +52,13 @@ public class Cart {
             items.add(cartItem);
         }
         return cartItem;
+    }
+
+    public void removeItem(Long productId){
+        var cartItem = getItem(productId);
+        if(cartItem != null) {
+            items.remove(cartItem);
+            cartItem.setCart(null);
+        }
     }
 }
