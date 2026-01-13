@@ -1,5 +1,6 @@
 package com.rumeshchathuranga.springapi.controllers;
 
+import com.rumeshchathuranga.springapi.config.JwtConfig;
 import com.rumeshchathuranga.springapi.dtos.JwtResponse;
 import com.rumeshchathuranga.springapi.dtos.LoginRequest;
 import com.rumeshchathuranga.springapi.dtos.UserDto;
@@ -26,6 +27,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final JwtConfig jwtConfig;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(
@@ -46,7 +48,7 @@ public class AuthController {
         var cookie = new Cookie("refreshToken",refreshToken);
         cookie.setHttpOnly(true);
         cookie.setPath("/auth/refresh");
-        cookie.setMaxAge(604800); //7d
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration());
         cookie.setSecure(true);
         response.addCookie(cookie);
 
