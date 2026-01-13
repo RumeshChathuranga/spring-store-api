@@ -288,9 +288,7 @@ public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgument
 
 
 
----
-
-### Custom Validation and Business Rules
+# Custom Validation and Business Rules
 
 Sometimes built-in annotations are insufficient for specific needs.
 
@@ -314,5 +312,111 @@ if (userRepository.existsByEmail(request.getEmail())) {
 ```
 
 
+---
+
+## JSON Web Tokens (JWT)
+
+* A **JSON Web Token (JWT)** is a compact, URL-safe string used to securely transmit information about a user between a client and a server.
+* It has **three parts**, separated by dots (`.`):
+
+```
+<Header>.<Payload>.<Signature>
+```
+
+### JWT Components
+
+* **Header**
+
+    * Specifies the signing algorithm and token type.
+
+* **Payload**
+
+    * Contains the actual data (called *claims*), such as user ID, email, role, etc.
+
+* **Signature**
+
+    * A cryptographic hash of the header and payload, signed with a secret key.
+    * Ensures the token has not been tampered with.
 
 ---
+
+## Token Types in JWT Authentication
+
+### Access Token
+
+* Used to access protected API endpoints.
+* Sent by the client on **every request** to the server.
+* Short-lived (usually **15 minutes or less**).
+* If compromised, the short lifespan limits damage.
+* Storage options:
+
+    * **Memory** (safer, but cleared on page reload)
+    * **localStorage** (persistent, but accessible to JavaScript)
+
+---
+
+### Refresh Token
+
+* Used to obtain a new access token when the current one expires.
+* Long-lived (typically **7 days or more**).
+* Reduces the need for the user to log in repeatedly.
+* Should be delivered as a **secure HttpOnly cookie** so it is not accessible from JavaScript.
+
+---
+
+# Securing APIs with Spring Security
+
+## Authentication Fundamentals
+
+We have two main authentication methods:
+
+* **Session-based authentication**
+
+    * Stores session data on the server.
+    * Suitable for traditional web apps.
+    * Not ideal for REST APIs.
+
+* **Token-based authentication**
+
+    * Uses stateless JWTs.
+    * Better suited for REST APIs.
+
+---
+
+## User Login and Password Security
+
+* Spring Security provides the `PasswordEncoder` interface for hashing passwords.
+* Authentication flow:
+
+    * Uses Spring’s built-in `AuthenticationManager`
+    * Delegates authentication to an `AuthenticationProvider`
+
+---
+
+## Spring Security Authentication Flow (Diagram)
+
+```mermaid
+classDiagram
+    class AuthenticationManager {
+        <<interface>>
+        + authenticate()
+    }
+
+    class AuthenticationProvider {
+        <<interface>>
+        + authenticate()
+    }
+
+    class DaoAuthenticationProvider {
+        - userDetailsService
+        - passwordEncoder
+        + authenticate()
+    }
+
+    AuthenticationManager --> AuthenticationProvider
+    AuthenticationProvider <|-- DaoAuthenticationProvider
+```
+
+---
+
+
