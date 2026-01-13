@@ -1,6 +1,7 @@
 package com.rumeshchathuranga.springapi.services;
 
 import com.rumeshchathuranga.springapi.config.JwtConfig;
+import com.rumeshchathuranga.springapi.entities.Role;
 import com.rumeshchathuranga.springapi.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -53,6 +54,10 @@ public class JwtService {
 
     public Long getUserIdFromToken(String token) {
         return Long.valueOf(getClaims(token).getSubject());
+    }
+
+    public Role getRoleFromToken(String token){
+        return Role.valueOf(getClaims(token).get("role").toString());
     }
 }
 
