@@ -4,6 +4,7 @@ import com.rumeshchathuranga.springapi.dtos.ChangePasswordRequest;
 import com.rumeshchathuranga.springapi.dtos.RegisterUserRequest;
 import com.rumeshchathuranga.springapi.dtos.UpdateUserRequest;
 import com.rumeshchathuranga.springapi.dtos.UserDto;
+import com.rumeshchathuranga.springapi.entities.Role;
 import com.rumeshchathuranga.springapi.mappers.UserMapper;
 import com.rumeshchathuranga.springapi.repositories.UserRepository;
 import jakarta.validation.Valid;
@@ -61,6 +62,7 @@ public class UserController {
         };
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(Role.USER);
         userRepository.save(user);
 
         var userDto = userMapper.toDto(user);
