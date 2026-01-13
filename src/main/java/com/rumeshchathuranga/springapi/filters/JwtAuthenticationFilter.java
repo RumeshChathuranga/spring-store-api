@@ -1,6 +1,5 @@
 package com.rumeshchathuranga.springapi.filters;
 
-import com.rumeshchathuranga.springapi.entities.Role;
 import com.rumeshchathuranga.springapi.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,16 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         var token = authHeader.replace("Bearer ", "");
-        if(!jwtService.validateToken(token)){
+        var jwt = jwtService.parseToken(token);
+        if(jwt == null || jwt.isExpired()){
             filterChain.doFilter(request, response);
             return;
         }
-        var role = jwtService.getRoleFromToken(token);
-        var userId =  jwtService.getUserIdFromToken(token);
         var authentication = new UsernamePasswordAuthenticationToken(
-                userId,
+                jwt.getUserId(),
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_"+role.name()))
+                List.of(new SimpleGrantedAuthority("ROLE_"+ jwt.getRole().name()))
         );
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
