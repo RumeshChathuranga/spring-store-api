@@ -1,9 +1,6 @@
 package com.rumeshchathuranga.springapi.controllers;
 
-import com.rumeshchathuranga.springapi.dtos.ChangePasswordRequest;
-import com.rumeshchathuranga.springapi.dtos.RegisterUserRequest;
-import com.rumeshchathuranga.springapi.dtos.UpdateUserRequest;
-import com.rumeshchathuranga.springapi.dtos.UserDto;
+import com.rumeshchathuranga.springapi.dtos.*;
 import com.rumeshchathuranga.springapi.entities.Role;
 import com.rumeshchathuranga.springapi.mappers.UserMapper;
 import com.rumeshchathuranga.springapi.repositories.UserRepository;
@@ -56,9 +53,7 @@ public class UserController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterUserRequest request,
                                                 UriComponentsBuilder uriBuilder){
         if(userRepository.existsByEmail(request.getEmail())){
-            return ResponseEntity.badRequest().body(
-                    Map.of("email", "Email is already registered")
-            );
+            return ResponseEntity.badRequest().body(new ErrorDto("Email already exists"));
         };
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));

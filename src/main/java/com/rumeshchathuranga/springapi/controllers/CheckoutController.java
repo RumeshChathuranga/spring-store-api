@@ -2,6 +2,7 @@ package com.rumeshchathuranga.springapi.controllers;
 
 import com.rumeshchathuranga.springapi.dtos.CheckoutRequest;
 import com.rumeshchathuranga.springapi.dtos.CheckoutResponse;
+import com.rumeshchathuranga.springapi.dtos.ErrorDto;
 import com.rumeshchathuranga.springapi.entities.Order;
 import com.rumeshchathuranga.springapi.entities.OrderItem;
 import com.rumeshchathuranga.springapi.entities.OrderStatus;
@@ -34,11 +35,11 @@ public class CheckoutController {
     ) {
         var cart = cartRepository.getCartsWithItems(request.getCartId()).orElse(null);
         if (cart == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Cart not found"));
+            return ResponseEntity.badRequest().body(new ErrorDto("Cart not found"));
         }
 
         if(cart.getItems().isEmpty()){
-            return ResponseEntity.badRequest().body(Map.of("error", "Cart is empty"));
+            return ResponseEntity.badRequest().body(new ErrorDto("Cart is empty"));
         }
         var order = new Order();
         order.setTotalPrice(cart.getTotalPrice());
