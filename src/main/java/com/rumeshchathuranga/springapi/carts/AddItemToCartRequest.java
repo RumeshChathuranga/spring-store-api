@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.dtos;
+package com.rumeshchathuranga.springapi.carts;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

@@ -1,8 +1,8 @@
 package com.rumeshchathuranga.springapi.payments;
 
 import com.rumeshchathuranga.springapi.dtos.ErrorDto;
-import com.rumeshchathuranga.springapi.exceptions.CartEmptyException;
-import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
+import com.rumeshchathuranga.springapi.carts.CartEmptyException;
+import com.rumeshchathuranga.springapi.carts.CartNotFoundException;
 import com.rumeshchathuranga.springapi.repositories.OrderRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

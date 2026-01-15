@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.exceptions;
+package com.rumeshchathuranga.springapi.carts;
 
 public class CartEmptyException extends RuntimeException {
     public CartEmptyException(){

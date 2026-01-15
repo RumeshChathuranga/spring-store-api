@@ -1,9 +1,7 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.carts;
 
 import com.rumeshchathuranga.springapi.dtos.*;
-import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
 import com.rumeshchathuranga.springapi.products.ProductNotFoundException;
-import com.rumeshchathuranga.springapi.services.CartService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

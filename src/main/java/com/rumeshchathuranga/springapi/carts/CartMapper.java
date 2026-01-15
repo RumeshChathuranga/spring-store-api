@@ -1,9 +1,5 @@
-package com.rumeshchathuranga.springapi.mappers;
+package com.rumeshchathuranga.springapi.carts;
 
-import com.rumeshchathuranga.springapi.dtos.CartDto;
-import com.rumeshchathuranga.springapi.dtos.CartItemDto;
-import com.rumeshchathuranga.springapi.entities.Cart;
-import com.rumeshchathuranga.springapi.entities.CartItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

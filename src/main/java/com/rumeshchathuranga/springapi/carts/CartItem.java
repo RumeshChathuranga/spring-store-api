@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.entities;
+package com.rumeshchathuranga.springapi.carts;
 
 import com.rumeshchathuranga.springapi.products.Product;
 import jakarta.persistence.*;
