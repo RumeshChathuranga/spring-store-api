@@ -1,7 +1,7 @@
 package com.rumeshchathuranga.springapi.users;
 
 
-import com.rumeshchathuranga.springapi.entities.Product;
+import com.rumeshchathuranga.springapi.products.Product;
 import jakarta.persistence.*;
 import lombok.*;
 

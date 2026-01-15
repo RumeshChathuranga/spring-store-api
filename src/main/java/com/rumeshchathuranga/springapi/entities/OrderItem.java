@@ -1,7 +1,7 @@
 package com.rumeshchathuranga.springapi.entities;
 
+import com.rumeshchathuranga.springapi.products.Product;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

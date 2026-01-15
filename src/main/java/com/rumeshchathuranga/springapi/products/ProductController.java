@@ -1,10 +1,5 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.products;
 
-import com.rumeshchathuranga.springapi.dtos.ProductDto;
-import com.rumeshchathuranga.springapi.entities.Product;
-import com.rumeshchathuranga.springapi.mappers.ProductMapper;
-import com.rumeshchathuranga.springapi.repositories.CategoryRepository;
-import com.rumeshchathuranga.springapi.repositories.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

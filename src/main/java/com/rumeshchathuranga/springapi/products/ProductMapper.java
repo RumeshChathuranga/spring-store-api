@@ -1,7 +1,5 @@
-package com.rumeshchathuranga.springapi.mappers;
+package com.rumeshchathuranga.springapi.products;
 
-import com.rumeshchathuranga.springapi.dtos.ProductDto;
-import com.rumeshchathuranga.springapi.entities.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

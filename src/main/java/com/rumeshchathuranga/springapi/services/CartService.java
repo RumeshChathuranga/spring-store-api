@@ -4,10 +4,10 @@ import com.rumeshchathuranga.springapi.dtos.CartDto;
 import com.rumeshchathuranga.springapi.dtos.CartItemDto;
 import com.rumeshchathuranga.springapi.entities.Cart;
 import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
-import com.rumeshchathuranga.springapi.exceptions.ProductNotFoundException;
+import com.rumeshchathuranga.springapi.products.ProductNotFoundException;
 import com.rumeshchathuranga.springapi.mappers.CartMapper;
 import com.rumeshchathuranga.springapi.repositories.CartRepository;
-import com.rumeshchathuranga.springapi.repositories.ProductRepository;
+import com.rumeshchathuranga.springapi.products.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

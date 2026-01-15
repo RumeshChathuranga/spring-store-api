@@ -2,7 +2,7 @@ package com.rumeshchathuranga.springapi.controllers;
 
 import com.rumeshchathuranga.springapi.dtos.*;
 import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
-import com.rumeshchathuranga.springapi.exceptions.ProductNotFoundException;
+import com.rumeshchathuranga.springapi.products.ProductNotFoundException;
 import com.rumeshchathuranga.springapi.services.CartService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController

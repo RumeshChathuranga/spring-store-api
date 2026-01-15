@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.dtos;
+package com.rumeshchathuranga.springapi.products;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

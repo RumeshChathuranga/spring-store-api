@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.repositories;
+package com.rumeshchathuranga.springapi.products;
 
-import com.rumeshchathuranga.springapi.entities.Product;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

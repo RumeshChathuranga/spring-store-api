@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.repositories;
+package com.rumeshchathuranga.springapi.products;
 
-import com.rumeshchathuranga.springapi.entities.Category;
 import org.springframework.data.repository.CrudRepository;
 
 public interface CategoryRepository extends CrudRepository<Category, Byte> {
