@@ -1,9 +1,6 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.users;
 
 import com.rumeshchathuranga.springapi.dtos.*;
-import com.rumeshchathuranga.springapi.entities.Role;
-import com.rumeshchathuranga.springapi.mappers.UserMapper;
-import com.rumeshchathuranga.springapi.repositories.UserRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -13,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
 import java.util.Set;
 
 

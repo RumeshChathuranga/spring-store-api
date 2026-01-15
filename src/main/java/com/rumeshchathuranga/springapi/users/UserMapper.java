@@ -1,9 +1,5 @@
-package com.rumeshchathuranga.springapi.mappers;
+package com.rumeshchathuranga.springapi.users;
 
-import com.rumeshchathuranga.springapi.dtos.RegisterUserRequest;
-import com.rumeshchathuranga.springapi.dtos.UpdateUserRequest;
-import com.rumeshchathuranga.springapi.dtos.UserDto;
-import com.rumeshchathuranga.springapi.entities.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

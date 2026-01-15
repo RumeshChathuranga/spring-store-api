@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.config;
 
-import com.rumeshchathuranga.springapi.entities.Role;
+import com.rumeshchathuranga.springapi.users.Role;
 import com.rumeshchathuranga.springapi.filters.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;

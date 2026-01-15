@@ -1,8 +1,6 @@
-package com.rumeshchathuranga.springapi.dtos;
+package com.rumeshchathuranga.springapi.users;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

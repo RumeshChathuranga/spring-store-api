@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.repositories;
+package com.rumeshchathuranga.springapi.users;
 
-import com.rumeshchathuranga.springapi.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

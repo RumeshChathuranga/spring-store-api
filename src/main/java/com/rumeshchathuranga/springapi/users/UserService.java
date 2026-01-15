@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.users;
 
-import com.rumeshchathuranga.springapi.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

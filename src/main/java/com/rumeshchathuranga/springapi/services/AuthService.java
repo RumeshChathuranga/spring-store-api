@@ -1,7 +1,7 @@
 package com.rumeshchathuranga.springapi.services;
 
-import com.rumeshchathuranga.springapi.entities.User;
-import com.rumeshchathuranga.springapi.repositories.UserRepository;
+import com.rumeshchathuranga.springapi.users.User;
+import com.rumeshchathuranga.springapi.users.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

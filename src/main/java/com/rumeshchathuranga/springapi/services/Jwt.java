@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.services;
 
-import com.rumeshchathuranga.springapi.entities.Role;
+import com.rumeshchathuranga.springapi.users.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 

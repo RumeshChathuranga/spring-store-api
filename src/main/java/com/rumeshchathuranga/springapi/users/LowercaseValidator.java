@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.validation;
+package com.rumeshchathuranga.springapi.users;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

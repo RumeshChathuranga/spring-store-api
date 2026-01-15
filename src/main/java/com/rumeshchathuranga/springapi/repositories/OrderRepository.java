@@ -1,8 +1,7 @@
 package com.rumeshchathuranga.springapi.repositories;
 
 import com.rumeshchathuranga.springapi.entities.Order;
-import com.rumeshchathuranga.springapi.entities.User;
-import org.aspectj.weaver.ast.Or;
+import com.rumeshchathuranga.springapi.users.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

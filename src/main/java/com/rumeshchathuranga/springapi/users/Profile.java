@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.entities;
+package com.rumeshchathuranga.springapi.users;
 
 import jakarta.persistence.*;
 import lombok.*;

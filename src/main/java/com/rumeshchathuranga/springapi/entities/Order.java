@@ -1,5 +1,6 @@
 package com.rumeshchathuranga.springapi.entities;
 
+import com.rumeshchathuranga.springapi.users.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
