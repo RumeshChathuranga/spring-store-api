@@ -1,9 +1,8 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.payments;
 
 import com.rumeshchathuranga.springapi.entities.Order;
 import com.rumeshchathuranga.springapi.entities.OrderItem;
 import com.rumeshchathuranga.springapi.entities.PaymentStatus;
-import com.rumeshchathuranga.springapi.exceptions.PaymentException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;

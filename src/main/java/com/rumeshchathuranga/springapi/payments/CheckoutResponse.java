@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.dtos;
+package com.rumeshchathuranga.springapi.payments;
 
 import lombok.Data;
 

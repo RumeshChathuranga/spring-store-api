@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.payments;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

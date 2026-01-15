@@ -1,19 +1,13 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.payments;
 
-import com.rumeshchathuranga.springapi.dtos.CheckoutRequest;
-import com.rumeshchathuranga.springapi.dtos.CheckoutResponse;
 import com.rumeshchathuranga.springapi.entities.Order;
-import com.rumeshchathuranga.springapi.entities.PaymentStatus;
 import com.rumeshchathuranga.springapi.exceptions.CartEmptyException;
 import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
-import com.rumeshchathuranga.springapi.exceptions.PaymentException;
 import com.rumeshchathuranga.springapi.repositories.CartRepository;
 import com.rumeshchathuranga.springapi.repositories.OrderRepository;
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
+import com.rumeshchathuranga.springapi.services.AuthService;
+import com.rumeshchathuranga.springapi.services.CartService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
