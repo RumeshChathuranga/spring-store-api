@@ -9,8 +9,8 @@ spring:
     show-sql: true
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 7200
-    refreshTokenExpiration: 604800
+    accessTokenExpiration: 900 # 15min
+    refreshTokenExpiration: 604800 #7d
 stripe:
   secretKey: ${STRIPE_SECRET_KEY}
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
