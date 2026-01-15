@@ -3,22 +3,20 @@ package com.rumeshchathuranga.springapi.controllers;
 import com.rumeshchathuranga.springapi.dtos.CheckoutRequest;
 import com.rumeshchathuranga.springapi.dtos.CheckoutResponse;
 import com.rumeshchathuranga.springapi.dtos.ErrorDto;
-import com.rumeshchathuranga.springapi.entities.OrderStatus;
 import com.rumeshchathuranga.springapi.exceptions.CartEmptyException;
 import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
 import com.rumeshchathuranga.springapi.exceptions.PaymentException;
 import com.rumeshchathuranga.springapi.repositories.OrderRepository;
 import com.rumeshchathuranga.springapi.services.CheckoutService;
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
+import com.rumeshchathuranga.springapi.services.WebhookRequest;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,41 +25,17 @@ public class CheckoutController {
     private final CheckoutService checkoutService;
     private final OrderRepository orderRepository;
 
-    @Value("${stripe.webhookSecretKey}")
-    private String webhookSecretKey;
-
     @PostMapping
     public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request) {
         return checkoutService.checkout(request);
     }
 
     @PostMapping("/webhook")
-    public ResponseEntity<Void> handleWebhook(
-            @RequestHeader("Stripe-Signature") String signature,
+    public void handleWebhook(
+            @RequestHeader Map<String,String > headers, // now controler dont know anything about stripe
             @RequestBody String payload
     ){
-        try {
-            var event = Webhook.constructEvent(payload,signature, webhookSecretKey);
-            var stripeObject = event.getDataObjectDeserializer().getObject().orElse(null);
-            switch (event.getType()) {
-                case "Payment_intent.succeeded" -> {
-                    var paymentIntent = (PaymentIntent) stripeObject;
-                    if(paymentIntent != null){
-                        var orderId = paymentIntent.getMetadata().get("orderId");
-                        var order = orderRepository.findById(Long.valueOf(orderId)).orElseThrow();
-                        order.setStatus(OrderStatus.PAID);
-                        orderRepository.save(order);
-                    }
-                }
-                case "Payment_intent.failed" -> {
-                    // Update order statud FAILED
-                }
-            }
-            return ResponseEntity.ok().build();
-
-        } catch (SignatureVerificationException e) {
-           return ResponseEntity.badRequest().build();
-        }
+        checkoutService.handleWebhookEvent(new WebhookRequest(headers, payload));
     }
 
     @ExceptionHandler(PaymentException.class)

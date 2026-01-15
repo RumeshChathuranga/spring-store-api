@@ -3,12 +3,17 @@ package com.rumeshchathuranga.springapi.services;
 import com.rumeshchathuranga.springapi.dtos.CheckoutRequest;
 import com.rumeshchathuranga.springapi.dtos.CheckoutResponse;
 import com.rumeshchathuranga.springapi.entities.Order;
+import com.rumeshchathuranga.springapi.entities.PaymentStatus;
 import com.rumeshchathuranga.springapi.exceptions.CartEmptyException;
 import com.rumeshchathuranga.springapi.exceptions.CartNotFoundException;
 import com.rumeshchathuranga.springapi.exceptions.PaymentException;
 import com.rumeshchathuranga.springapi.repositories.CartRepository;
 import com.rumeshchathuranga.springapi.repositories.OrderRepository;
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,4 +53,13 @@ public class CheckoutService {
             throw  ex;
         }
     }
+
+    public void handleWebhookEvent(WebhookRequest request){
+        paymentGateway.parseWebhookRequest(request)
+                .ifPresent(paymentResult -> {
+                    var order = orderRepository.findById(paymentResult.getOrderId()).orElseThrow();
+                    order.setStatus(paymentResult.getPaymentStatus());
+                    orderRepository.save(order);
+                });
+           }
 }
