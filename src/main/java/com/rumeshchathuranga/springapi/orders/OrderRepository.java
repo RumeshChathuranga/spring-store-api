@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.repositories;
+package com.rumeshchathuranga.springapi.orders;
 
-import com.rumeshchathuranga.springapi.entities.Order;
 import com.rumeshchathuranga.springapi.users.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

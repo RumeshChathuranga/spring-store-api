@@ -1,10 +1,10 @@
 package com.rumeshchathuranga.springapi.payments;
 
-import com.rumeshchathuranga.springapi.entities.Order;
+import com.rumeshchathuranga.springapi.orders.Order;
 import com.rumeshchathuranga.springapi.carts.CartEmptyException;
 import com.rumeshchathuranga.springapi.carts.CartNotFoundException;
 import com.rumeshchathuranga.springapi.carts.CartRepository;
-import com.rumeshchathuranga.springapi.repositories.OrderRepository;
+import com.rumeshchathuranga.springapi.orders.OrderRepository;
 import com.rumeshchathuranga.springapi.auth.AuthService;
 import com.rumeshchathuranga.springapi.carts.CartService;
 import lombok.RequiredArgsConstructor;

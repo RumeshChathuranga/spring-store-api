@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.payments;
 
-import com.rumeshchathuranga.springapi.entities.PaymentStatus;
+import com.rumeshchathuranga.springapi.orders.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

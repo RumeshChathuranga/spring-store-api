@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.entities;
+package com.rumeshchathuranga.springapi.orders;
 
 import com.rumeshchathuranga.springapi.carts.Cart;
 import com.rumeshchathuranga.springapi.users.User;

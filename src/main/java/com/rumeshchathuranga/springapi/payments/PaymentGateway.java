@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.payments;
 
-import com.rumeshchathuranga.springapi.entities.Order;
+import com.rumeshchathuranga.springapi.orders.Order;
 
 import java.util.Optional;
 

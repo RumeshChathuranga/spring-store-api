@@ -1,9 +1,6 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.orders;
 
 import com.rumeshchathuranga.springapi.dtos.ErrorDto;
-import com.rumeshchathuranga.springapi.dtos.OrderDto;
-import com.rumeshchathuranga.springapi.exceptions.OrderNotFoundException;
-import com.rumeshchathuranga.springapi.services.OrderService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
