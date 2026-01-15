@@ -1,12 +1,8 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.auth;
 
-import com.rumeshchathuranga.springapi.config.JwtConfig;
-import com.rumeshchathuranga.springapi.dtos.JwtResponse;
-import com.rumeshchathuranga.springapi.dtos.LoginRequest;
 import com.rumeshchathuranga.springapi.users.UserDto;
 import com.rumeshchathuranga.springapi.users.UserMapper;
 import com.rumeshchathuranga.springapi.users.UserRepository;
-import com.rumeshchathuranga.springapi.services.JwtService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.auth;
 
 import com.rumeshchathuranga.springapi.users.Role;
 import io.jsonwebtoken.Claims;

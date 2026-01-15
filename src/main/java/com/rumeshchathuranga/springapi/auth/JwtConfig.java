@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.config;
+package com.rumeshchathuranga.springapi.auth;
 
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;

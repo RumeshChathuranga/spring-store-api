@@ -1,5 +1,6 @@
 package com.rumeshchathuranga.springapi.services;
 
+import com.rumeshchathuranga.springapi.auth.AuthService;
 import com.rumeshchathuranga.springapi.dtos.OrderDto;
 import com.rumeshchathuranga.springapi.exceptions.OrderNotFoundException;
 import com.rumeshchathuranga.springapi.mappers.OrderMapper;

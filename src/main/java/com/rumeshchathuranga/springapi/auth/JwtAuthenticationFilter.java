@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.filters;
+package com.rumeshchathuranga.springapi.auth;
 
-import com.rumeshchathuranga.springapi.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,6 +1,5 @@
-package com.rumeshchathuranga.springapi.services;
+package com.rumeshchathuranga.springapi.auth;
 
-import com.rumeshchathuranga.springapi.config.JwtConfig;
 import com.rumeshchathuranga.springapi.users.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
