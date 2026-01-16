@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.carts;
 
-import com.rumeshchathuranga.springapi.dtos.*;
+import com.rumeshchathuranga.springapi.common.ErrorDto;
 import com.rumeshchathuranga.springapi.products.ProductNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

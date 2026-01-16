@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.auth;
+package com.rumeshchathuranga.springapi.common;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

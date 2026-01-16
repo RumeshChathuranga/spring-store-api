@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.orders;
 
-import com.rumeshchathuranga.springapi.dtos.ErrorDto;
+import com.rumeshchathuranga.springapi.common.ErrorDto;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

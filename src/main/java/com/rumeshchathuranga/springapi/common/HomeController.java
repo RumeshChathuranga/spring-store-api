@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.common;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

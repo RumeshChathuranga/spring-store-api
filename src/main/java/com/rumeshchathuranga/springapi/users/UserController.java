@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.users;
 
-import com.rumeshchathuranga.springapi.dtos.*;
+import com.rumeshchathuranga.springapi.common.ErrorDto;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.rumeshchathuranga.springapi.controllers;
+package com.rumeshchathuranga.springapi.admin;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

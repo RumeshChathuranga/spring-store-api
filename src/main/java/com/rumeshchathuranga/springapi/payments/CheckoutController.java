@@ -1,6 +1,6 @@
 package com.rumeshchathuranga.springapi.payments;
 
-import com.rumeshchathuranga.springapi.dtos.ErrorDto;
+import com.rumeshchathuranga.springapi.common.ErrorDto;
 import com.rumeshchathuranga.springapi.carts.CartEmptyException;
 import com.rumeshchathuranga.springapi.carts.CartNotFoundException;
 import com.rumeshchathuranga.springapi.orders.OrderRepository;
