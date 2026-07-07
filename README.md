@@ -1,422 +1,298 @@
-# Introduction to Spring MVC
+# Store API - Modern E-Commerce Backend
+
+A production-ready, secure, and modular RESTful API built with **Spring Boot 4** and **Java 25**. This project serves as a showcase of modern software engineering practices, utilizing stateless JWT-based authentication, a clean decoupled payment flow with Stripe, relational database schema migrations, and structured component-oriented architecture.
+
+Designed with a clear separation of concerns, this API provides robust back-end support for user management, product catalogs, shopping carts, checkout, orders, and payment integrations.
 
 ---
 
-### How the Web Works
+## Technical Stack & Architecture
 
-When browsing a website, a **client** (the browser) sends a request to a **server**. The server processes this and
-returns a **response**. This exchange is governed by **HTTP** (HyperText Transfer Protocol).
+- **Language Runtime:** Java 25 (utilizing modern syntax and standard APIs)
+- **Framework:** Spring Boot 4.0.1 (Web, Security, Data JPA, Validation, Thymeleaf)
+- **Database:** MySQL 8.x
+- **Schema Migration:** Flyway Database Migration
+- **Security:** Spring Security 6 with stateless JWT authentication (sliding session support)
+- **Object Mapping:** MapStruct 1.6.3 (efficient Entity-to-DTO conversion)
+- **Payment Processing:** Stripe Java SDK 31.1.0
+- **Configuration Management:** Dotenv Java (loads `.env` parameters into JVM system properties)
 
-#### Anatomy of HTTP
+### Architectural Flow
 
-| Part               | Description                                  |
-|--------------------|----------------------------------------------|
-| **Request Method** | Specifies the action (GET, POST, PUT, DELETE).|
-| **Request URL** | The address of the specific resource being requested.|
-| **Request Headers** | Extra metadata like content type or authentication tokens.|
-| **Request Body** | Optional data sent to the server, such as form submissions.|
-| **Response Status Code** | Indicates success or failure (e.g., 200 OK, 404 Not Found).|
-| **Response Headers** | Metadata describing the returned response.|
-| **Response Body** | The actual content, such as HTML markup or JSON data.|
-
----
-
-### Web Page Generation
-
-Web pages are built using **HTML** (HyperText Markup Language) through two primary methods:
-
-* **Server-Side Rendering (SSR):** The server generates the full HTML page and sends it to the client.
-
-* **Client-Side Rendering (CSR):** The server sends raw JSON data, and the client uses JavaScript to generate the page
-dynamically.
-
-#### Key Definitions
-
-* **JSON (JavaScript Object Notation):** A lightweight, human-readable format used to structure data, commonly used in
-APIs.
-
-* **API (Application Programming Interface):** A communication bridge that allows clients to send or request data to and
-from a server.
-
-
-
----
-
-### The MVC Pattern
-
-Spring MVC organizes applications into three distinct parts:
-
-1. **Model:** Represents the data and business logic, often mapped to database entities.
-
-2. **View:** Defines the data display, often using template engines like Thymeleaf in traditional apps.
-
-3. **Controller:** The coordinator that handles HTTP requests, processes data, and returns responses.
-
-
-
----
-
-### Handling Requests in Spring MVC
-
-Spring MVC utilizes specialized annotations to manage different types of web traffic:
-
-* **`@Controller`**: Primarily used for returning HTML views.
-
-* **`@RestController`**: Used for returning data; it automatically converts Java objects into JSON.
-
-#### Code Examples
-
-**1. Returning an HTML View**
-
-```java
-
-@Controller
-public class HomeController {
-    @RequestMapping("/")
-    public String index(Model model) {
-        model.addAttribute("name", "Mosh");
-        return "index"; // Returns index.html
-    }
-}
+The project is structured around a decoupled layered architecture:
 
 ```
-
-**2. Returning JSON Data**
-
-```java
-
-@RestController
-public class MessageController {
-    @RequestMapping("/hello")
-    public Message sayHello() {
-        return new Message("Hello World!"); // Converted to JSON
-    }
-}
-
-```
-# Building RESTful APIs
-
-This guide details the design and implementation of RESTful APIs in Spring Boot, covering HTTP request handling, API response structuring, and the execution of CRUD operations.
-
----
-
-### Creating APIs
-
-Spring Boot uses specific annotations to define the structure of a REST controller:
-
-* **`@RestController`**: Identifies a class as a controller for a REST API.
-
-
-* **`@RequestMapping`**: Sets the base URL path for all endpoints defined within that controller.
-
-
-
-```java
-@RestController
-@RequestMapping("/products")
-public class ProductController { }
-
+[ Client ] 
+    │ (HTTP / JSON / Cookies)
+    ▼
+[ Security Filter Chain ] ◄── [ JwtAuthenticationFilter ]
+    │ (Authorized Requests)
+    ▼
+[ Controllers ] ◄──► [ Mappers (MapStruct) ] ◄──► [ DTOs ]
+    │
+    ▼
+[ Services / Interfaces ] ◄──► [ Gateways (Stripe SDK) ]
+    │
+    ▼
+[ Repositories (Spring Data JPA) ]
+    │
+    ▼
+[ Database (MySQL) ]
 ```
 
 ---
 
-### Handling HTTP Requests
+## Database Design & Entity Relationships
 
-Different annotations allow you to extract data from various parts of an incoming HTTP request:
+The relational database schema is managed via incremental **Flyway** migrations located under `src/main/resources/db/migration`. 
 
-* **`@PathVariable`**: Used to extract values directly from the URL path, such as a specific resource ID.
-
-
-```java
-@GetMapping("/{id}")
-public Product getProduct(@PathVariable Long id) {}
-
-```
-
-
-* **`@RequestParam`**: Extracts query parameters from the URL, which is a standard practice for filtering and sorting data.
-
-
-* **`@RequestHeader`**: Reads specific HTTP headers, typically used for metadata or authentication tokens.
-
-
-* **`@RequestBody`**: Extracts data from the body of the request, which is common when creating or updating resources.
-
-
-
----
-
-### Handling HTTP Responses
-
-To provide structured and meaningful feedback to the client, Spring Boot uses specific tools for response management:
-
-* **`ResponseEntity`**: A utility class used to customize the entire API response, including the status code, headers, and body.
-
-
-* **Common HTTP Status Codes**:
-* **200 OK**: The request was successful.
-
-
-* **201 Created**: A new resource was successfully created.
-
-
-* **400 Bad Request**: The request was invalid.
-
-
-* **404 Not Found**: The requested resource does not exist.
-
-
-
-
-
----
-
-### Using DTOs and Mapping
-
-To maintain a clean architecture and security, internal database entities should not be exposed directly to the client.
-
-* **Data Transfer Objects (DTOs)**: Custom objects used to define exactly what data should be sent in an API response.
-
-
-* **MapStruct**: A library that automates the conversion between database entities and DTOs, removing the need for manual mapping code.
-
-
-
-```java
-@Mapper(componentModel = "spring")
-public interface ProductMapper {
-    @Mapping(source = "category.id", target = "categoryId")
-    ProductDto toDto(Product product);
-}
-
-```
-
----
-
-### CRUD Operations
-
-The following table summarizes how standard database actions map to HTTP methods in a RESTful service:
-
-| Operation | HTTP Method | Description |
-| --- | --- | --- |
-| **Create** | `POST` | Adds new data to the database.|
-| **Read** | `GET` | Retrieves data, often with filtering or sorting.|
-| **Update** | `PUT`/`PATCH` | Modifies existing records.|
-| **Delete** | `DELETE` | Removes data while handling errors.|
-| **Action Update** | `POST` | Used for state changes that don't fit standard CRUD (e.g., password changes).|
-
----
-
-# Validating API Requests
-
----
-
-### Jakarta Validation Annotations
-
-Spring Boot leverages Jakarta Validation to enforce rules directly on data fields using annotations.
-
-#### String Validation
-
-* **`@NotBlank`**: Ensures a string is not empty and contains at least one non-whitespace character.
-
-
-* **`@NotEmpty`**: Ensures a string is not empty (`""`) but allows whitespace.
-
-
-* **`@Size`**: Enforces specific character length constraints.
-
-
-* **`@Pattern`**: Ensures the value matches a defined regex pattern (e.g., for phone numbers).
-
-
-* **`@Email`**: Validates that the string follows a proper email format.
-
-
-
-#### Number Validation
-
-* **`@Positive` / `@PositiveOrZero`**: Ensures the value is greater than 0, or 0 and greater, respectively.
-
-
-* **`@Negative` / `@NegativeOrZero`**: Ensures the value is less than 0, or 0 and less, respectively.
-
-
-* **`@Min(value)` / `@Max(value)`**: Enforces a minimum or maximum numerical value.
-
-
-
-#### Date and Time Validation
-
-* **`@Past` / `@PastOrPresent`**: Ensures the date is in the past, or allows for today's date.
-
-
-* **`@Future` / `@FutureOrPresent`**: Ensures the date is in the future, or allows for today's date.
-
-
-
-#### General Validation
-
-* **`@NotNull`**: Ensures the field value is not null.
-
-
-
----
-
-### Handling Validation Errors
-
-When a request fails validation, Spring throws a `MethodArgumentNotValidException`.
-
-#### Local and Global Handling
-
-* **Local Handling**: You can use `@ExceptionHandler` within a specific controller to catch errors and return structured messages.
-
-
-* **Global Handling**: Using `@ControllerAdvice`, you can move error handling to a centralized class to maintain consistency across the entire application.
-
-
-
-```java
-@ExceptionHandler(MethodArgumentNotValidException.class)
-public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException exception) {
-    var errors = new HashMap<String, String>();
-    exception.getBindingResult().getFieldErrors().forEach(error -> 
-        errors.put(error.getField(), error.getDefaultMessage()));
-    return ResponseEntity.badRequest().body(errors);
-}
-
-```
-
-
-
-# Custom Validation and Business Rules
-
-Sometimes built-in annotations are insufficient for specific needs.
-
-* **Custom Annotations**: You can create custom validation annotations by defining an `@interface` and a corresponding validator class.
-
-
-* **Business Rules**: Validation that requires external checks (like querying a database to see if an email is already taken) is typically handled in the controller rather than through annotations.
-
-
-* **Validation Order**: Input format is validated first via annotations; if those pass, business rules are then checked in the logic.
-
-
-
-```java
-if (userRepository.existsByEmail(request.getEmail())) {
-    return ResponseEntity.badRequest().body(
-        Map.of("email", "Email is already registered.")
-    );
-}
-
-```
-
-
----
-
-## JSON Web Tokens (JWT)
-
-* A **JSON Web Token (JWT)** is a compact, URL-safe string used to securely transmit information about a user between a client and a server.
-* It has **three parts**, separated by dots (`.`):
-
-```
-<Header>.<Payload>.<Signature>
-```
-
-### JWT Components
-
-* **Header**
-
-    * Specifies the signing algorithm and token type.
-
-* **Payload**
-
-    * Contains the actual data (called *claims*), such as user ID, email, role, etc.
-
-* **Signature**
-
-    * A cryptographic hash of the header and payload, signed with a secret key.
-    * Ensures the token has not been tampered with.
-
----
-
-## Token Types in JWT Authentication
-
-### Access Token
-
-* Used to access protected API endpoints.
-* Sent by the client on **every request** to the server.
-* Short-lived (usually **15 minutes or less**).
-* If compromised, the short lifespan limits damage.
-* Storage options:
-
-    * **Memory** (safer, but cleared on page reload)
-    * **localStorage** (persistent, but accessible to JavaScript)
-
----
-
-### Refresh Token
-
-* Used to obtain a new access token when the current one expires.
-* Long-lived (typically **7 days or more**).
-* Reduces the need for the user to log in repeatedly.
-* Should be delivered as a **secure HttpOnly cookie** so it is not accessible from JavaScript.
-
----
-
-# Securing APIs with Spring Security
-
-## Authentication Fundamentals
-
-We have two main authentication methods:
-
-* **Session-based authentication**
-
-    * Stores session data on the server.
-    * Suitable for traditional web apps.
-    * Not ideal for REST APIs.
-
-* **Token-based authentication**
-
-    * Uses stateless JWTs.
-    * Better suited for REST APIs.
-
----
-
-## User Login and Password Security
-
-* Spring Security provides the `PasswordEncoder` interface for hashing passwords.
-* Authentication flow:
-
-    * Uses Spring’s built-in `AuthenticationManager`
-    * Delegates authentication to an `AuthenticationProvider`
-
----
-
-## Spring Security Authentication Flow (Diagram)
+### Entity-Relationship Diagram (ERD)
 
 ```mermaid
-classDiagram
-    class AuthenticationManager {
-        <<interface>>
-        + authenticate()
+erDiagram
+    users {
+        bigint id PK
+        varchar name
+        varchar email
+        varchar password
+        varchar role
+    }
+    profiles {
+        bigint id PK, FK
+        longtext bio
+        varchar phone_number
+        date date_of_birth
+        int loyalty_points
+    }
+    addresses {
+        bigint id PK
+        varchar street
+        varchar city
+        varchar state
+        varchar zip
+        bigint user_id FK
+    }
+    categories {
+        tinyint id PK
+        varchar name
+    }
+    products {
+        bigint id PK
+        varchar name
+        decimal price
+        longtext description
+        tinyint category_id FK
+    }
+    wishlist {
+        bigint product_id PK, FK
+        bigint user_id PK, FK
+    }
+    carts {
+        binary id PK
+        date date_created
+    }
+    cart_items {
+        bigint id PK
+        binary cart_id FK
+        bigint product_id FK
+        int quantity
+    }
+    orders {
+        bigint id PK
+        bigint customer_id FK
+        varchar status
+        datetime created_at
+        decimal total_price
+    }
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint product_id FK
+        decimal unit_price
+        int quantity
+        decimal total_price
     }
 
-    class AuthenticationProvider {
-        <<interface>>
-        + authenticate()
-    }
-
-    class DaoAuthenticationProvider {
-        - userDetailsService
-        - passwordEncoder
-        + authenticate()
-    }
-
-    AuthenticationManager --> AuthenticationProvider
-    AuthenticationProvider <|-- DaoAuthenticationProvider
+    users ||--o| profiles : "has profile"
+    users ||--o{ addresses : "registers"
+    users ||--o{ orders : "places"
+    users }|..|{ products : "favorites (wishlist)"
+    categories ||--o{ products : "categorizes"
+    carts ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "added to"
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "ordered as"
 ```
 
 ---
 
+## Modular Security Design
 
+Instead of having a monolithic config block, this project configures Spring Security through a modular, decoupled structure using a custom interface:
+
+```java
+public interface SecurityRules {
+    void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry);
+}
+```
+
+Any class implementing `SecurityRules` and annotated with `@Component` is injected into the primary security filter chain automatically:
+
+- **`AuthSecurityRules`**: Exposes `/auth/login` and `/auth/refresh` endpoint routes.
+- **`UserSecurityRules`**: Exposes user registration (`POST /users`) to the public.
+- **`ProductSecurityRules`**: Regulates public read-access and restricted write-access to the product catalog.
+- **`AdminSecurityRules`**: Restricts the `/admin/**` endpoints to users with the `ADMIN` role.
+- **`SwaggerSecurityRules`**: Configures access to `/swagger-ui/**` and API documentation.
+
+### Authentication Flow (Stateless JWT)
+
+1. **Login**: User submits credentials to `/auth/login`. Upon success, the system returns a short-lived JSON Web Token (Access Token) in the response body.
+2. **Sliding Sessions**: The system sets a long-lived **HttpOnly**, **Secure** cookie containing a `refreshToken` bound to `/auth/refresh`.
+3. **Session Refresh**: When the access token expires, clients call `/auth/refresh` with the cookie to retrieve a new short-lived access token, bypassing password entry.
+
+---
+
+## API Endpoints
+
+### 1. Authentication (`/auth`)
+
+| Method | Endpoint | Description | Auth Required | Request Body / Cookies |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/auth/login` | Log in and receive Access Token + Refresh Cookie | None | `{"email": "...", "password": "..."}` |
+| `POST` | `/auth/refresh` | Get a new Access Token using Refresh Cookie | None (Requires Cookie) | Cookie: `refreshToken` |
+| `GET` | `/auth/me` | Fetch currently authenticated user profile | Yes | Bearer Token |
+
+### 2. User Management (`/users`)
+
+| Method | Endpoint | Description | Auth Required | Request Body |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/users` | Register a new user | None | `{"name": "...", "email": "...", "password": "..."}` |
+| `GET` | `/users` | List all users (sorting optional: `?sortBy=email`) | Yes | None |
+| `GET` | `/users/{id}` | Retrieve user by ID | Yes | None |
+| `PUT` | `/users/{id}` | Update user fields (name, email) | Yes | `{"name": "...", "email": "..."}` |
+| `DELETE` | `/users/{id}` | Remove a user | Yes | None |
+| `POST` | `/users/{id}/change-password` | Change user password | Yes | `{"oldPassword": "...", "newPassword": "..."}` |
+
+### 3. Product Catalog (`/products`)
+
+| Method | Endpoint | Description | Auth Required | Request Body |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/products` | List all products (filter optional: `?categoryId=1`) | None | None |
+| `POST` | `/products` | Create a new product | Yes (Admin) | `{"name": "...", "description": "...", "price": 99.99, "categoryId": 1}` |
+| `PUT` | `/products/{id}` | Update an existing product | Yes (Admin) | `{"name": "...", "description": "...", "price": 89.99, "categoryId": 1}` |
+| `DELETE` | `/products/{id}` | Delete a product | Yes (Admin) | None |
+
+### 4. Shopping Cart (`/carts`)
+
+| Method | Endpoint | Description | Auth Required | Request Body / Params |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/carts` | Initialize a new cart | None | None (Returns Cart UUID) |
+| `GET` | `/carts/{cartId}` | Retrieve cart details and line items | None | None |
+| `POST` | `/carts/{cartId}/items` | Add product to cart | None | `{"productId": 1}` |
+| `POST` | `/carts/{cartId}/items/{productId}` | Update quantity of a product in cart | None | `{"quantity": 5}` |
+| `DELETE` | `/carts/{cartId}/items/{productId}`| Remove item from cart | None | None |
+| `DELETE` | `/carts/{cartId}/items` | Clear all items from cart | None | None |
+
+### 5. Orders & Checkout (`/checkout` & `/orders`)
+
+| Method | Endpoint | Description | Auth Required | Request Body |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/checkout` | Initiate checkout for a cart (Returns Stripe Session URL) | Yes | `{"cartId": "UUID"}` |
+| `POST` | `/checkout/webhook` | Stripe async events webhook endpoint | None | Stripe Webhook Payload |
+| `GET` | `/orders` | Retrieve authenticated user's order history | Yes | None |
+| `GET` | `/orders/{orderId}` | Fetch details of a specific order | Yes | None |
+
+---
+
+## Checkout & Payment Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    Client->>API: POST /checkout { cartId: "..." } (Bearer Token)
+    Note over API: 1. Fetch Cart details<br/>2. Retrieve Current User<br/>3. Build Order (Status: PENDING)
+    API->>Stripe API: Create Checkout Session (line items & metadata)
+    Stripe API-->>API: Session Details & Checkout URL
+    Note over API: 4. Clear Cart items
+    API-->>Client: Return 200 OK { orderId: 1, checkoutUrl: "https://checkout.stripe.com/..." }
+    Client->>Stripe: Redirect to Stripe Hosted Checkout
+    Stripe->>Client: Collects Payment & Redirects to websiteUrl/checkout-success
+    
+    Note over Stripe: Processing Payment Async
+    Stripe->>API: POST /checkout/webhook (stripe-signature header)
+    Note over API: Verify signature & parse event
+    alt Payment Successful
+        Note over API: Update Order Status to PAID
+    else Payment Failed
+        Note over API: Update Order Status to FAILED
+    end
+```
+
+---
+
+## Configuration & Environment Variables
+
+Create a file named `.env` in the root directory. Copy the structure below and input your specific credentials:
+
+```ini
+JWT_SECRET=your_jwt_signing_secret_min_32_characters
+STRIPE_SECRET_KEY=sk_test_yourstripekeyhere
+STRIPE_WEBHOOK_SECRET_KEY=whsec_yourwebhookkeyhere
+```
+
+### Database Profiles
+
+- **Development (`dev`)**: Uses local configuration values under `src/main/resources/application-dev.yaml` targeting a local database called `store_api`.
+- **Production (`prod`)**: Inherits configurations from `src/main/resources/application-prod.yaml` relying on runtime environment variables like `SPRING_DATASOURCE_URL`.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Java Development Kit (JDK):** Version 25
+- **Build Tool:** Apache Maven
+- **Database Engine:** MySQL 8.x
+- **Payment CLI (Optional for Webhooks):** Stripe CLI
+
+### Setup Database
+
+Log into your MySQL shell and create the database schema:
+
+```sql
+CREATE DATABASE store_api;
+```
+
+*(Note: Flyway will execute database migration scripts automatically on application startup to create tables, keys, and schemas)*
+
+### Build and Run
+
+1. Clone the project files:
+   ```bash
+   git clone <repository_url>
+   cd spring-api
+   ```
+2. Set up the `.env` file containing configuration keys in the root.
+3. Build the project artifacts:
+   ```bash
+   ./mvnw clean package
+   ```
+4. Start the Spring Boot application server:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+### Webhook Tunneling (Stripe testing)
+
+To test Stripe Webhooks locally:
+
+1. Log in to Stripe via the CLI:
+   ```bash
+   stripe login
+   ```
+2. Forward events to the local dev server webhook controller endpoint:
+   ```bash
+   stripe listen --forward-to localhost:8080/checkout/webhook
+   ```
+3. Copy the printed webhook signing secret (`whsec_...`) and update your `.env` value under `STRIPE_WEBHOOK_SECRET_KEY`.
