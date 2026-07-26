@@ -1,0 +1,597 @@
+###############################################################################
+# STORE API — BASELINE REGRESSION COLLECTION
+#
+# This is the safety net for the whole microservices migration (docs/MIGRATION.md).
+# The repo has one `contextLoads` test, so this file is what tells you whether a
+# phase broke something. Run it end to end after every phase.
+#
+# FORMAT: VS Code "REST Client" extension (humao.rest-client). Click "Send Request"
+#         above each block, or run them top to bottom — later requests reuse the
+#         tokens and IDs captured by earlier ones via the `# @name` references.
+#         For IntelliJ's HTTP Client, replace `{{login.response.body.$.token}}`
+#         with a `{% client.global.set(...) %}` post-script block.
+#
+# ORDER MATTERS. Run sections 1 → 9 in sequence on a fresh database.
+#
+# ─── ONE-TIME SETUP BEFORE FIRST RUN ────────────────────────────────────────
+#   1. Start the app (./mvnw spring-boot:run) so Flyway builds the schema.
+#   2. Run section 1.1 and 1.2 below (registers both accounts).
+#   3. mysql -u root -p store_api < docs/seed-baseline.sql
+#      ...which seeds categories and promotes admin@baseline.test to ADMIN.
+#      Neither is reachable through the API — see the comments in that file.
+#   4. Run everything from section 2 onward.
+#
+# ─── EXPECTED FAILURES (pre-existing bugs, NOT migration breakage) ───────────
+#   • 2.4 POST /auth/refresh returns 401 over plain HTTP — for two reasons, both
+#     fixed in Phase 1: the refresh cookie is Secure (so no client replays it
+#     over http://), and unhandled exceptions get masked as 401 by the /error
+#     dispatch (see below).
+#   • ANY unhandled exception on a public endpoint surfaces as 401 instead of its
+#     real status. Boot forwards to /error, and no SecurityRules bean permits
+#     /error, so anyRequest().authenticated() rejects the forward. Exceptions
+#     caught by GlobalExceptionHandler (validation, malformed JSON) are unaffected
+#     because they never reach /error. Phase 1 adds /error to the permit list.
+#   • 4.x /users/{id} lets ANY authenticated user read, modify, and delete ANY
+#     other user. Section 8 asserts today's (broken) behavior. Fixed in Phase 4.
+#   • 5.x /carts/** is fully public with no owner binding. Fixed in Phase 7.
+#   • 9.2 the Stripe webhook never updates order status (event-name casing and
+#     metadata-key mismatch). Fixed in Phase 8.
+#   These are documented so a green run after Phase 4/7/8 — where the assertions
+#   flip — is recognized as progress, not regression.
+###############################################################################
+
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+# Fixed credentials so re-runs are predictable.
+@userEmail = user@baseline.test
+@userPassword = Passw0rd!
+@adminEmail = admin@baseline.test
+@adminPassword = Adm1nPass!
+
+
+###############################################################################
+# 1. REGISTRATION  (public — UserSecurityRules permits POST /users)
+###############################################################################
+
+### 1.1 Register the normal user — expect 201 + Location header
+# @name registerUser
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Baseline User",
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+### 1.2 Register the admin user — expect 201
+# Still role=USER at this point; seed-baseline.sql promotes it.
+# @name registerAdmin
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Baseline Admin",
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### 1.3 Duplicate email — expect 200 with {"message": "..."} body
+# NOTE: DuplicateUserException maps to a plain @ExceptionHandler returning
+# ErrorDto with no status override, so this returns 200, not 409. Pre-existing.
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Duplicate",
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+### 1.4 Validation failure — expect 400 with a field->message map
+# Blank name, non-lowercase email (custom @Lowercase), 3-char password (min 6).
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "",
+  "email": "MiXeDCase@baseline.test",
+  "password": "abc"
+}
+
+### 1.5 Malformed JSON — expect 400 {"message": "Invalid request body"}
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{ "name": "broken", }
+
+
+###############################################################################
+# 2. AUTHENTICATION
+###############################################################################
+
+### 2.1 Login as the normal user — expect 200 {"token": "..."}
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+@token = {{login.response.body.$.token}}
+
+### 2.2 Login as admin — expect 200
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+@adminToken = {{loginAdmin.response.body.$.token}}
+
+### 2.3 Wrong password — expect 401 (empty body)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "{{userEmail}}",
+  "password": "definitely-wrong"
+}
+
+### 2.4 Refresh the access token — expect 401 over plain HTTP
+# The endpoint itself works (verified: supply the cookie by hand and it returns
+# 200). Two separate things make this 401 in practice:
+#   a) login sets the refresh cookie Secure + path=/auth/refresh, so no client
+#      stores or replays it over http://. Phase 1 makes Secure configurable.
+#   b) with no cookie, MissingRequestCookieException is NOT handled by
+#      GlobalExceptionHandler, so Boot forwards to /error — and /error is not
+#      permitted by any SecurityRules bean, so anyRequest().authenticated()
+#      turns the 400 into a 401. Phase 1 permits /error.
+POST {{baseUrl}}/auth/refresh
+
+### 2.5 Current user — expect 200 with the user's UserDto
+# @name me
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+@userId = {{me.response.body.$.id}}
+
+### 2.6 Current admin — expect 200, captures the admin's id for section 8
+# @name meAdmin
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{adminToken}}
+
+@adminId = {{meAdmin.response.body.$.id}}
+
+### 2.7 /auth/me with no token — expect 401
+GET {{baseUrl}}/auth/me
+
+### 2.8 /auth/me with a garbage token — expect 401
+GET {{baseUrl}}/auth/me
+Authorization: Bearer not.a.real.token
+
+
+###############################################################################
+# 3. PRODUCTS  (GET public; POST/PUT/DELETE require ROLE_ADMIN)
+###############################################################################
+
+### 3.1 List all products — expect 200, public, no token needed
+GET {{baseUrl}}/products
+
+### 3.2 Create a product as ADMIN — expect 201 + Location
+# @name createProduct
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Baseline Widget",
+  "price": 19.99,
+  "description": "Created by the baseline collection",
+  "categoryId": 1
+}
+
+@productId = {{createProduct.response.body.$.id}}
+
+### 3.3 Create a second product (needed for multi-item cart tests) — expect 201
+# @name createProduct2
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Baseline Gadget",
+  "price": 5.50,
+  "description": "Second baseline product",
+  "categoryId": 2
+}
+
+@productId2 = {{createProduct2.response.body.$.id}}
+
+### 3.4 Create as a NORMAL user — expect 403
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Should Be Rejected",
+  "price": 1.00,
+  "description": "normal user may not create",
+  "categoryId": 1
+}
+
+### 3.5 Create with no token — expect 401
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+
+{
+  "name": "Should Be Rejected",
+  "price": 1.00,
+  "description": "anonymous may not create",
+  "categoryId": 1
+}
+
+### 3.6 Create with a nonexistent category — expect 400 (empty body)
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Bad Category",
+  "price": 1.00,
+  "description": "categoryId 99 is not seeded",
+  "categoryId": 99
+}
+
+### 3.7 Filter by category — expect 200, only Electronics (categoryId 1)
+GET {{baseUrl}}/products?categoryId=1
+
+### 3.8 Update a product as ADMIN — expect 200
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Baseline Widget (updated)",
+  "price": 24.99,
+  "description": "Updated by the baseline collection",
+  "categoryId": 1
+}
+
+### 3.9 Update a nonexistent product — expect 404
+PUT {{baseUrl}}/products/999999
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Ghost",
+  "price": 1.00,
+  "description": "no such product",
+  "categoryId": 1
+}
+
+
+###############################################################################
+# 4. USERS  (all authenticated; NO ownership checks today — see section 8)
+###############################################################################
+
+### 4.1 List all users — expect 200
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### 4.2 List sorted by name — expect 200
+GET {{baseUrl}}/users?sortBy=name
+Authorization: Bearer {{token}}
+
+### 4.3 List sorted by email — expect 200
+GET {{baseUrl}}/users?sortBy=email
+Authorization: Bearer {{token}}
+
+### 4.4 Get own user by id — expect 200
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### 4.5 Get a nonexistent user — expect 404
+GET {{baseUrl}}/users/999999
+Authorization: Bearer {{token}}
+
+### 4.6 List users with no token — expect 401
+GET {{baseUrl}}/users
+
+### 4.7 Update own profile — expect 200
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Baseline User Renamed",
+  "email": "{{userEmail}}"
+}
+
+
+###############################################################################
+# 5. CARTS  (fully public today — CartSecurityRules permits /carts/**)
+###############################################################################
+
+### 5.1 Create a cart — expect 201 + Location, no token required
+# @name createCart
+POST {{baseUrl}}/carts
+
+@cartId = {{createCart.response.body.$.id}}
+
+### 5.2 Add a product to the cart — expect 201 with a CartItemDto
+POST {{baseUrl}}/carts/{{cartId}}/items
+Content-Type: {{contentType}}
+
+{
+  "productId": {{productId}}
+}
+
+### 5.3 Add the same product again — expect 201, quantity increments to 2
+POST {{baseUrl}}/carts/{{cartId}}/items
+Content-Type: {{contentType}}
+
+{
+  "productId": {{productId}}
+}
+
+### 5.4 Add the second product — expect 201
+POST {{baseUrl}}/carts/{{cartId}}/items
+Content-Type: {{contentType}}
+
+{
+  "productId": {{productId2}}
+}
+
+### 5.5 Get the cart — expect 200 with items[] and a computed totalPrice
+GET {{baseUrl}}/carts/{{cartId}}
+
+### 5.6 Update an item's quantity — expect 200
+# NOTE: this is POST, not PUT. Unusual, but that is the real route.
+POST {{baseUrl}}/carts/{{cartId}}/items/{{productId}}
+Content-Type: {{contentType}}
+
+{
+  "quantity": 5
+}
+
+### 5.7 Quantity 0 — expect 400 (@Min(1))
+POST {{baseUrl}}/carts/{{cartId}}/items/{{productId}}
+Content-Type: {{contentType}}
+
+{
+  "quantity": 0
+}
+
+### 5.8 Quantity 101 — expect 400 (@Max(100))
+POST {{baseUrl}}/carts/{{cartId}}/items/{{productId}}
+Content-Type: {{contentType}}
+
+{
+  "quantity": 101
+}
+
+### 5.9 Add a nonexistent product — expect 404 "Product not found in the cart"
+POST {{baseUrl}}/carts/{{cartId}}/items
+Content-Type: {{contentType}}
+
+{
+  "productId": 999999
+}
+
+### 5.10 Get a nonexistent cart — expect 404 "Cart not found"
+GET {{baseUrl}}/carts/00000000-0000-0000-0000-000000000000
+
+### 5.11 Remove one item — expect 204
+DELETE {{baseUrl}}/carts/{{cartId}}/items/{{productId2}}
+
+### 5.12 Confirm removal — expect 200, that item gone
+GET {{baseUrl}}/carts/{{cartId}}
+
+
+###############################################################################
+# 6. CHECKOUT  (authenticated; needs a non-empty cart + live Stripe test keys)
+###############################################################################
+
+### 6.1 Create a fresh cart for checkout — expect 201
+# @name checkoutCart
+POST {{baseUrl}}/carts
+
+@checkoutCartId = {{checkoutCart.response.body.$.id}}
+
+### 6.2 Put an item in it — expect 201
+POST {{baseUrl}}/carts/{{checkoutCartId}}/items
+Content-Type: {{contentType}}
+
+{
+  "productId": {{productId}}
+}
+
+### 6.3 Checkout — expect 200 {"orderId": N, "checkoutUrl": "https://checkout.stripe.com/..."}
+# Requires a valid STRIPE_SECRET_KEY. Without one, expect 500
+# {"message": "Error creating a checkout session"} — that is a config problem,
+# not a regression. Open checkoutUrl and pay with test card 4242 4242 4242 4242.
+# @name checkout
+POST {{baseUrl}}/checkout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "cartId": "{{checkoutCartId}}"
+}
+
+@orderId = {{checkout.response.body.$.orderId}}
+
+### 6.4 Checkout with no token — expect 401
+POST {{baseUrl}}/checkout
+Content-Type: {{contentType}}
+
+{
+  "cartId": "{{checkoutCartId}}"
+}
+
+### 6.5 Checkout the now-empty cart again — expect 400 (CartEmptyException)
+POST {{baseUrl}}/checkout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "cartId": "{{checkoutCartId}}"
+}
+
+### 6.6 Checkout a nonexistent cart — expect 400 (CartNotFoundException)
+POST {{baseUrl}}/checkout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "cartId": "00000000-0000-0000-0000-000000000000"
+}
+
+### 6.7 Missing cartId — expect 400 (@NotNull)
+POST {{baseUrl}}/checkout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{}
+
+
+###############################################################################
+# 7. ORDERS  (authenticated; only the caller's own orders)
+###############################################################################
+
+### 7.1 List my orders — expect 200 with the order from 6.3
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### 7.2 Get one order — expect 200, status PENDING (or PAID after a webhook)
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### 7.3 Get someone else's order — expect 403 with an ErrorDto
+# The admin did not place this order, so Order.isPlacedBy fails.
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{adminToken}}
+
+### 7.4 Get a nonexistent order — expect 404
+GET {{baseUrl}}/orders/999999
+Authorization: Bearer {{token}}
+
+### 7.5 List orders with no token — expect 401
+GET {{baseUrl}}/orders
+
+
+###############################################################################
+# 8. ADMIN + AUTHORIZATION MATRIX
+###############################################################################
+
+### 8.1 /admin/hello as ADMIN — expect 200 "Hello World"
+GET {{baseUrl}}/admin/hello
+Authorization: Bearer {{adminToken}}
+
+### 8.2 /admin/hello as normal user — expect 403
+GET {{baseUrl}}/admin/hello
+Authorization: Bearer {{token}}
+
+### 8.3 /admin/hello anonymous — expect 401
+GET {{baseUrl}}/admin/hello
+
+### 8.4 Swagger UI — expect 200 (public)
+GET {{baseUrl}}/swagger-ui/index.html
+
+### 8.5 OpenAPI spec — expect 200 JSON listing every endpoint
+GET {{baseUrl}}/v3/api-docs
+
+### 8.6 Unmapped path — expect 401, not 404
+# SecurityConfig ends with anyRequest().authenticated(), so unknown paths are
+# rejected before routing. Confirms default-deny is intact.
+GET {{baseUrl}}/this/route/does/not/exist
+
+### ⚠️ 8.7 PRIVILEGE ESCALATION — user reads the ADMIN's record
+# TODAY: 200 (bug). AFTER PHASE 4: 403. Flipping to 403 is the fix landing.
+GET {{baseUrl}}/users/{{adminId}}
+Authorization: Bearer {{token}}
+
+### ⚠️ 8.8 PRIVILEGE ESCALATION — user overwrites the ADMIN's profile
+# TODAY: 200 (bug). AFTER PHASE 4: 403.
+PUT {{baseUrl}}/users/{{adminId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Hijacked By Baseline",
+  "email": "{{adminEmail}}"
+}
+
+### ⚠️ 8.9 CART HIJACK — anonymous caller reads a cart they do not own
+# TODAY: 200 (bug). AFTER PHASE 7: 403 once the cart has an owner.
+GET {{baseUrl}}/carts/{{cartId}}
+
+
+###############################################################################
+# 9. DESTRUCTIVE — run these LAST, they delete the baseline fixtures
+###############################################################################
+
+### 9.1 Change password — expect 200
+# ⚠️ UserService.changePassword writes the new password WITHOUT bcrypt encoding,
+# so 9.2 below currently FAILS with 401. After the Phase 4 fix, 9.2 must pass.
+POST {{baseUrl}}/users/{{userId}}/change-password
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "oldPassword": "{{userPassword}}",
+  "newPassword": "NewPassw0rd!"
+}
+
+### 9.2 Log in with the NEW password — TODAY 401 (bug), AFTER PHASE 4 expect 200
+# This single request proves the plaintext-password bug is fixed.
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "{{userEmail}}",
+  "password": "NewPassw0rd!"
+}
+
+### 9.3 Wrong old password — expect 401 (handler catches the wrong exception type)
+# UserController imports java.nio.file.AccessDeniedException but the service
+# throws org.springframework.security.access.AccessDeniedException, so the
+# handler never fires and this surfaces as a 403 from Spring Security instead.
+POST {{baseUrl}}/users/{{userId}}/change-password
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "oldPassword": "wrong-old-password",
+  "newPassword": "Whatever1!"
+}
+
+### 9.4 Clear the cart — expect 204
+DELETE {{baseUrl}}/carts/{{cartId}}/items
+
+### 9.5 Confirm empty — expect 200, items: [], totalPrice: 0
+GET {{baseUrl}}/carts/{{cartId}}
+
+### 9.6 Delete a product as ADMIN — expect 204
+DELETE {{baseUrl}}/products/{{productId2}}
+Authorization: Bearer {{adminToken}}
+
+### 9.7 Delete a product as normal user — expect 403
+DELETE {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{token}}
+
+### 9.8 Delete a nonexistent product — expect 404
+DELETE {{baseUrl}}/products/999999
+Authorization: Bearer {{adminToken}}
+
+### 9.9 Delete the baseline user — expect 200 (void handler, no explicit status)
+# Leaves the DB clean enough to re-run the collection from section 1.
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
