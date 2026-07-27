@@ -7,6 +7,24 @@ spring:
     refreshTokenExpiration: 604800 #7d
   profiles:
     active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 30s # already the Boot 4 default; explicit for k8s terminationGracePeriodSeconds
+server:
+  shutdown: graceful # already the Boot 4 default; explicit for the same reason
 stripe:
   secretKey: ${STRIPE_SECRET_KEY}
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
+app:
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true # on by default in Boot 4; pinned so a default change can't silently break k8s probes
+      show-details: never

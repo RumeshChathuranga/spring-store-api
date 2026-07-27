@@ -1,4 +1,13 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-websiteUrl: https://store.com
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+  jpa:
+    show-sql: false
+app:
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+websiteUrl: ${WEBSITE_URL:https://store.com}

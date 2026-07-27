@@ -1,0 +1,63 @@
+name: store
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: store-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: store_api
+    ports:
+      # 3307 on the host so this never collides with a locally installed MySQL.
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # -h 127.0.0.1 (not localhost) on purpose: during initdb the official image
+      # runs a temporary server with --skip-networking, reachable only over the
+      # unix socket. A socket-based ping would report healthy while the database
+      # is still being created, and the app would start against a half-built schema.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --protocol=TCP -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: store-monolith:dev # same tag Phase 2 loads into minikube
+    container_name: store-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # `mysql` is the compose service name -> container DNS. Port 3306 is the
+      # CONTAINER port; the 3307 host mapping is irrelevant in-network.
+      DB_URL: jdbc:mysql://mysql:3306/store_api?allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?set STRIPE_SECRET_KEY in .env}
+      STRIPE_WEBHOOK_SECRET_KEY: ${STRIPE_WEBHOOK_SECRET_KEY:?set STRIPE_WEBHOOK_SECRET_KEY in .env}
+      WEBSITE_URL: ${WEBSITE_URL:-http://localhost:4242}
+      COOKIE_SECURE: "false" # plain HTTP on :8080
+      TZ: UTC
+    ports:
+      - "${APP_HOST_PORT:-8080}:8080"
+    healthcheck:
+      # 30s interval, not 10s: LoggingFilter System.out.println's every request,
+      # so a tight probe interval turns `docker compose logs` into noise.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s # Boot 4 + JPA + Flyway on a cold JVM
+    # No restart policy on purpose: during Phase 1 a boot failure should stop and
+    # be visible, not crash-loop quietly.
+
+volumes:
+  mysql-data:

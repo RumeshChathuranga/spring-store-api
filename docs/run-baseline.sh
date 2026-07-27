@@ -9,6 +9,7 @@
 #   ./docs/run-baseline.sh                          # against http://localhost:8080
 #   BASE_URL=http://store.local ./docs/run-baseline.sh
 #   DB_PASSWORD=secret ./docs/run-baseline.sh       # for the category/admin seed
+#   DB_HOST=127.0.0.1 DB_PORT=3307 DB_PASSWORD=... ./docs/run-baseline.sh   # against docker compose
 #
 # Exit code 0 = every assertion matched expectations.
 #
@@ -20,8 +21,10 @@ set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 DB_NAME="${DB_NAME:-store_api}"
-DB_USER="${DB_USER:-root}"
-DB_PASSWORD="${DB_PASSWORD:-Ruma@1220}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+DB_USER="${DB_USER:-${DB_USERNAME:-root}}"
+DB_PASSWORD="${DB_PASSWORD:-}"
 
 USER_EMAIL="user@baseline.test"
 USER_PASSWORD='Passw0rd!'
@@ -61,6 +64,14 @@ J='Content-Type: application/json'
 printf '%sBaseline against %s%s\n' $'\e[1m' "$BASE_URL" "$c_reset"
 
 ###############################################################################
+section "0. Platform (actuator + /error dispatch) — added in Phase 1"
+###############################################################################
+check "0.1 GET /actuator/health"               200 "$BASE_URL/actuator/health"
+check "0.2 GET /actuator/health/liveness"      200 "$BASE_URL/actuator/health/liveness"
+check "0.3 GET /actuator/health/readiness"     200 "$BASE_URL/actuator/health/readiness"
+check "0.4 GET /actuator/metrics stays private" 401 "$BASE_URL/actuator/metrics"
+
+###############################################################################
 section "1. Registration"
 ###############################################################################
 check "1.1 POST /users (register user)"        201 -X POST "$BASE_URL/users" -H "$J" \
@@ -77,7 +88,8 @@ check "1.5 POST /users malformed JSON"         400 -X POST "$BASE_URL/users" -H 
 ###############################################################################
 section "2. Seed (categories + admin promotion — not creatable via API)"
 ###############################################################################
-if command -v mysql >/dev/null && mysql -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+if command -v mysql >/dev/null && mysql --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" \
+      -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
       < "$(dirname "$0")/seed-baseline.sql" >/dev/null 2>&1; then
   printf '%s  PASS%s  %-58s seeded\n' "$c_green" "$c_reset" "2.1 seed categories + promote admin"
   ((PASS++))
@@ -101,9 +113,11 @@ AUTH_ADMIN="Authorization: Bearer $ADMIN_TOKEN"
 
 check "3.3 POST /auth/login wrong password"    401 -X POST "$BASE_URL/auth/login" -H "$J" \
   -d "{\"email\":\"$USER_EMAIL\",\"password\":\"nope\"}"
-# 401, not 400: MissingRequestCookieException is not handled by GlobalExceptionHandler,
-# so Boot forwards to /error, which anyRequest().authenticated() rejects. See Phase 1.
-check "3.4 POST /auth/refresh no cookie [/error masked as 401]" 401 -X POST "$BASE_URL/auth/refresh"
+# Was 401 before Phase 1: MissingRequestCookieException is not handled by
+# GlobalExceptionHandler, so Boot forwarded to /error, which no SecurityRules
+# bean permitted -- anyRequest().authenticated() masked the 400 as 401.
+# PlatformSecurityRules now permits /error, so the real status surfaces.
+check "3.4 POST /auth/refresh no cookie"       400 -X POST "$BASE_URL/auth/refresh"
 check "3.5 GET /auth/me"                       200 "$BASE_URL/auth/me" -H "$AUTH"
 USER_ID="$(jsonfield id "$BODY")"
 check "3.6 GET /auth/me (admin)"               200 "$BASE_URL/auth/me" -H "$AUTH_ADMIN"

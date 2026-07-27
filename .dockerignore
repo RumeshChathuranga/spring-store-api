@@ -1,0 +1,49 @@
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Build output — must never leak into the build context; a host-built target/
+# would be shadowed by the container build anyway and only bloats the context.
+target/
+**/target/
+build/
+HELP.md
+
+# Secrets and local environment. The image reads config from env vars only.
+.env
+.env.*
+!.env.example
+
+# Docker itself
+Dockerfile
+.dockerignore
+docker-compose.yml
+compose.yaml
+compose.yml
+
+# Docs, scripts, k8s manifests — not inputs to the build
+docs/
+devops/
+k8s/
+README.md
+CLAUDE.md
+script.sql
+
+# IDE / editor
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.sts4-cache
+.apt_generated
+.springBeans
+
+# OS
+.DS_Store
+Thumbs.db

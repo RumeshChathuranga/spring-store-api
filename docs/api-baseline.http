@@ -15,22 +15,24 @@
 #
 # ─── ONE-TIME SETUP BEFORE FIRST RUN ────────────────────────────────────────
 #   1. Start the app (./mvnw spring-boot:run) so Flyway builds the schema.
+#      Alternatively: docker compose up --build, then
+#      mysql --protocol=TCP -h 127.0.0.1 -P 3307 -u root -p store_api < docs/seed-baseline.sql
 #   2. Run section 1.1 and 1.2 below (registers both accounts).
 #   3. mysql -u root -p store_api < docs/seed-baseline.sql
 #      ...which seeds categories and promotes admin@baseline.test to ADMIN.
 #      Neither is reachable through the API — see the comments in that file.
 #   4. Run everything from section 2 onward.
 #
+# ─── FIXED IN PHASE 1 (was an expected failure through Phase 0) ──────────────
+#   • 2.4 POST /auth/refresh with no cookie now returns 400, not 401.
+#     PlatformSecurityRules permits /error, so Boot's ERROR dispatch is no longer
+#     re-authorized and masked. Any unhandled exception on a public endpoint now
+#     surfaces its real status.
+#   • The refresh cookie's Secure flag is now app.cookie.secure (COOKIE_SECURE);
+#     it defaults to false on the dev profile and in docker compose, so a REST
+#     client does store and replay it over http:// and a genuine refresh returns 200.
+#
 # ─── EXPECTED FAILURES (pre-existing bugs, NOT migration breakage) ───────────
-#   • 2.4 POST /auth/refresh returns 401 over plain HTTP — for two reasons, both
-#     fixed in Phase 1: the refresh cookie is Secure (so no client replays it
-#     over http://), and unhandled exceptions get masked as 401 by the /error
-#     dispatch (see below).
-#   • ANY unhandled exception on a public endpoint surfaces as 401 instead of its
-#     real status. Boot forwards to /error, and no SecurityRules bean permits
-#     /error, so anyRequest().authenticated() rejects the forward. Exceptions
-#     caught by GlobalExceptionHandler (validation, malformed JSON) are unaffected
-#     because they never reach /error. Phase 1 adds /error to the permit list.
 #   • 4.x /users/{id} lets ANY authenticated user read, modify, and delete ANY
 #     other user. Section 8 asserts today's (broken) behavior. Fixed in Phase 4.
 #   • 5.x /carts/** is fully public with no owner binding. Fixed in Phase 7.
@@ -48,6 +50,24 @@
 @userPassword = Passw0rd!
 @adminEmail = admin@baseline.test
 @adminPassword = Adm1nPass!
+
+
+###############################################################################
+# 0. PLATFORM  (actuator + /error dispatch — added in Phase 1)
+###############################################################################
+
+### 0.1 Actuator health — expect 200 {"status":"UP"}
+GET {{baseUrl}}/actuator/health
+
+### 0.2 Actuator liveness group — expect 200
+GET {{baseUrl}}/actuator/health/liveness
+
+### 0.3 Actuator readiness group — expect 200
+GET {{baseUrl}}/actuator/health/readiness
+
+### 0.4 Actuator metrics — expect 401. Only health/info are permitted anonymous;
+###     everything else under /actuator stays behind anyRequest().authenticated().
+GET {{baseUrl}}/actuator/metrics
 
 
 ###############################################################################
@@ -144,15 +164,10 @@ Content-Type: {{contentType}}
   "password": "definitely-wrong"
 }
 
-### 2.4 Refresh the access token — expect 401 over plain HTTP
-# The endpoint itself works (verified: supply the cookie by hand and it returns
-# 200). Two separate things make this 401 in practice:
-#   a) login sets the refresh cookie Secure + path=/auth/refresh, so no client
-#      stores or replays it over http://. Phase 1 makes Secure configurable.
-#   b) with no cookie, MissingRequestCookieException is NOT handled by
-#      GlobalExceptionHandler, so Boot forwards to /error — and /error is not
-#      permitted by any SecurityRules bean, so anyRequest().authenticated()
-#      turns the 400 into a 401. Phase 1 permits /error.
+### 2.4 Refresh the access token — expect 200 when the login cookie was stored,
+###     400 (MissingRequestCookieException) when it was not. Both fixed in Phase 1:
+###     COOKIE_SECURE=false lets the client keep the cookie over http://, and
+###     /error is permitted so the 400 is no longer masked as 401.
 POST {{baseUrl}}/auth/refresh
 
 ### 2.5 Current user — expect 200 with the user's UserDto

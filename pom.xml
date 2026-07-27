@@ -28,6 +28,15 @@
     </scm>
     <properties>
         <java.version>25</java.version>
+
+        <!-- flyway-maven-plugin: non-secret local defaults. Overridden by (in
+             increasing precedence) flyway.conf, the FLYWAY_* environment
+             variables, and -Dflyway.* system properties. No password here — supply
+             FLYWAY_PASSWORD, -Dflyway.password, or a <server id="flyway-db"> in
+             ~/.m2/settings.xml. -->
+        <flyway.url>jdbc:mysql://localhost:3306/store_api?createDatabaseIfNotExist=true</flyway.url>
+        <flyway.user>root</flyway.user>
+        <flyway.cleanDisabled>false</flyway.cleanDisabled>
     </properties>
 
     <dependencies>
@@ -119,11 +128,9 @@
             <version>0.13.0</version>
         </dependency>
 
-        <!-- Direct dotenv dependency -->
         <dependency>
-            <groupId>io.github.cdimascio</groupId>
-            <artifactId>dotenv-java</artifactId>
-            <version>3.0.0</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
             <groupId>com.stripe</groupId>
@@ -161,12 +168,6 @@
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
-                <configuration>
-                    <url>jdbc:mysql://localhost:3306/store_api?createDatabaseIfNotExist=true</url>
-                    <user>root</user>
-                    <password>Ruma@1220</password>
-                    <cleanDisabled>false</cleanDisabled>
-                </configuration>
             </plugin>
 
             <plugin>

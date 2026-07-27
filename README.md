@@ -15,7 +15,8 @@ Designed with a clear separation of concerns, this API provides robust back-end 
 - **Security:** Spring Security 6 with stateless JWT authentication (sliding session support)
 - **Object Mapping:** MapStruct 1.6.3 (efficient Entity-to-DTO conversion)
 - **Payment Processing:** Stripe Java SDK 31.1.0
-- **Configuration Management:** Dotenv Java (loads `.env` parameters into JVM system properties)
+- **Configuration Management:** 12-factor — all config from environment variables; `.env` is a local shell convenience only
+- **Containerization:** Docker (multi-stage, layered Spring Boot image) + Docker Compose
 
 ### Architectural Flow
 
@@ -232,18 +233,29 @@ sequenceDiagram
 
 ## Configuration & Environment Variables
 
-Create a file named `.env` in the root directory. Copy the structure below and input your specific credentials:
+The application reads **all** configuration from the process environment — there is no `.env` loading inside the app itself. `.env` (gitignored) is a local convenience that you source into your shell before running Maven commands, and that Docker Compose reads for `${...}` interpolation:
+
+```bash
+set -a; . ./.env; set +a
+```
+
+Copy [.env.example](.env.example) to `.env` and fill in:
 
 ```ini
 JWT_SECRET=your_jwt_signing_secret_min_32_characters
 STRIPE_SECRET_KEY=sk_test_yourstripekeyhere
 STRIPE_WEBHOOK_SECRET_KEY=whsec_yourwebhookkeyhere
+DB_URL=jdbc:mysql://localhost:3306/store_api?createDatabaseIfNotExist=true
+DB_USERNAME=root
+DB_PASSWORD=your_local_mysql_password
 ```
+
+`DB_URL`/`DB_USERNAME` have defaults for the dev profile; `DB_PASSWORD` does not, in either profile — the app will not start without it.
 
 ### Database Profiles
 
-- **Development (`dev`)**: Uses local configuration values under `src/main/resources/application-dev.yaml` targeting a local database called `store_api`.
-- **Production (`prod`)**: Inherits configurations from `src/main/resources/application-prod.yaml` relying on runtime environment variables like `SPRING_DATASOURCE_URL`.
+- **Development (`dev`, default)**: [application-dev.yaml](src/main/resources/application-dev.yaml), targeting a local database called `store_api`.
+- **Production (`prod`)**: [application-prod.yaml](src/main/resources/application-prod.yaml), driven entirely by `DB_URL` / `DB_USERNAME` / `DB_PASSWORD`. Both profiles use the same variable names, so one env block works everywhere.
 
 ---
 
@@ -273,7 +285,11 @@ CREATE DATABASE store_api;
    git clone <repository_url>
    cd spring-api
    ```
-2. Set up the `.env` file containing configuration keys in the root.
+2. Copy `.env.example` to `.env` and fill in the configuration keys, then source it into your shell:
+   ```bash
+   cp .env.example .env   # then edit .env
+   set -a; . ./.env; set +a
+   ```
 3. Build the project artifacts:
    ```bash
    ./mvnw clean package
@@ -282,6 +298,22 @@ CREATE DATABASE store_api;
    ```bash
    ./mvnw spring-boot:run
    ```
+
+### Run with Docker
+
+No local JDK or MySQL install required — `docker compose` builds the image and runs the app against a `mysql:8.4` container:
+
+```bash
+cp .env.example .env   # fill in JWT_SECRET, STRIPE_*, MYSQL_ROOT_PASSWORD
+docker compose up --build
+```
+
+The app comes up on `http://localhost:8080` (MySQL is exposed on host port `3307` to avoid colliding with a local install). Health check: `curl http://localhost:8080/actuator/health`.
+
+```bash
+docker compose down       # stop, keep data
+docker compose down -v    # stop and wipe the database volume
+```
 
 ### Webhook Tunneling (Stripe testing)
 
