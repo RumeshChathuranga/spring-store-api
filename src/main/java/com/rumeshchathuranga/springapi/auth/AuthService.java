@@ -1,16 +1,15 @@
 package com.rumeshchathuranga.springapi.auth;
 
-import com.rumeshchathuranga.springapi.users.User;
-import com.rumeshchathuranga.springapi.users.UserRepository;
-import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.rumeshchathuranga.springapi.users.User;
+import com.rumeshchathuranga.springapi.users.UserRepository;
+
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor

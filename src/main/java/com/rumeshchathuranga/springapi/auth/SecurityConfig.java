@@ -1,11 +1,9 @@
 package com.rumeshchathuranga.springapi.auth;
 
-import com.rumeshchathuranga.springapi.common.SecurityRules;
-import com.rumeshchathuranga.springapi.users.Role;
-import lombok.AllArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -22,7 +20,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.List;
+import com.rumeshchathuranga.springapi.common.SecurityRules;
+
+import lombok.AllArgsConstructor;
 
 @Configuration
 @EnableWebSecurity

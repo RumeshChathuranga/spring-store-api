@@ -1,14 +1,13 @@
 package com.rumeshchathuranga.springapi.users;
 
-import lombok.AllArgsConstructor;
+import java.util.Set;
+
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
